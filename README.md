@@ -5,7 +5,7 @@ Parceria comunitária de impacto social e tecnológico desenvolvida para a clín
 
 # 🚀 Links Rápidos do Projeto
 
-- 🌐 **Acesso ao Portal Online:** [SiGOS Pages]([https://camilexaviermedina.github.io/sigos-repository/src/SiGOS.Web/index.html](https://camilexaviermedina.github.io/sigos-repository/))
+- 🌐 **Acesso ao Portal Online:** [SiGOS Pages](https://camilexaviermedina.github.io/sigos-repository/)
 - 🎨 **Protótipo Interativo UI/UX:** Figma SiGOS Design
 - 📅 **Quadro Scrumban de Atividades:** Trello de Gerenciamento
 
