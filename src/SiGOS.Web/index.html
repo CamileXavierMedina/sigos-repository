@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SiGOS - Portal do Aluno & Painel Administrativo</title>
+    <title>SiGOS - Portal de Odontologia Social</title>
     <!-- Tailwind CSS para estilização moderna e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Ícones do Font Awesome -->
@@ -32,14 +32,30 @@
             font-family: 'Lato', sans-serif;
         }
 
-        h1, h2, h3, h4 {
+        h1, h2, h3, h4, h5 {
             font-family: 'Poppins', sans-serif;
+        }
+        /* Animação de pulso/alerta para limite de tempo da cadeira */
+        @keyframes blink-alert {
+            0%, 100% {
+                background-color: #ef4444;
+                color: white;
+            }
+
+            50% {
+                background-color: #fee2e2;
+                color: #b91c1c;
+            }
+        }
+
+        .animate-blink-red {
+            animation: blink-alert 1s infinite;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- Alerta Flutuante de Cota Excedida / Mensagem do Sistema -->
+    <!-- ALERTA FLUTUANTE DE COTA EXCEDIDA / MENSAGEM DO SISTEMA -->
     <div id="quotaAlert" class="fixed top-5 right-5 bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 max-w-md opacity-0 pointer-events-none -translate-y-4">
         <div class="text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div>
@@ -48,383 +64,667 @@
         </div>
     </div>
 
-    <!-- Alerta de Sucesso -->
+    <!-- ALERTA DE SUCESSO -->
     <div id="successToast" class="fixed top-5 right-5 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 max-w-md opacity-0 pointer-events-none -translate-y-4">
         <div class="text-2xl"><i class="fa-solid fa-circle-check"></i></div>
         <div>
-            <h4 class="font-bold">Solicitação Enviada!</h4>
+            <h4 class="font-bold" id="successToastTitle">Solicitação Enviada!</h4>
             <p id="successToastText" class="text-xs text-emerald-100">Seus dados foram encaminhados com sucesso para triagem.</p>
         </div>
     </div>
 
-    <!-- Header Principal e Seletor de Telas (Para Simulação e Teste Integrado) -->
-    <header class="bg-brand-dark text-white shadow-md border-b-4 border-brand-orange sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <span class="text-3xl">🦷</span>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-tight uppercase text-brand-orange">SiGOS</h1>
-                    <p class="text-xs text-orange-200">Gestão de Odontologia Social</p>
-                </div>
-            </div>
-
-            <!-- Seletor de Telas para fins de Apresentação à Banca -->
-            <div class="bg-[#2d0d05] p-1 rounded-xl border border-brand-orange/20 flex gap-1">
-                <button id="btnAlunoView" onclick="switchView('aluno')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-brand-orange text-white">
-                    <i class="fa-solid fa-user-graduate"></i> 1. Portal do Aluno
-                </button>
-                <button id="btnAdminView" onclick="switchView('admin')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-orange-200 hover:text-white">
-                    <i class="fa-solid fa-user-tie"></i> 2. Painel da Secretaria
-                </button>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <span id="userBadge" class="text-xs bg-[#5c1c0a] px-3 py-1.5 rounded-full border border-brand-orange/30 text-orange-100">
-                    Sessão: <strong id="loggedUser">Estudante Visitante</strong>
-                </span>
+    <!-- SIDEBAR MENU (MENU LATERAL FIXO) -->
+    <aside class="w-full md:w-64 bg-brand-dark text-white flex flex-col shrink-0 border-r-4 border-brand-orange">
+        <!-- Logo Header -->
+        <div class="p-6 bg-[#2d0d05] border-b border-brand-orange/20 flex items-center gap-3">
+            <span class="text-3xl text-brand-orange">🦷</span>
+            <div>
+                <h1 class="font-black text-xl tracking-wider text-brand-orange">SiGOS</h1>
+                <p class="text-[10px] text-orange-200 uppercase tracking-widest">Odontologia Social</p>
             </div>
         </div>
-    </header>
 
-    <!-- ========================================== -->
-    <!-- TELA 1: PORTAL DO ALUNO (INSPIRADO NO FIGMA) -->
-    <!-- ========================================== -->
-    <div id="alunoView" class="view-panel transition-all duration-300">
-        <!-- Banner de Boas-Vindas & Regras -->
-        <section class="bg-gradient-to-r from-brand-dark to-[#2d0d05] text-white py-12 px-4 border-b border-brand-orange/10">
-            <div class="max-w-4xl mx-auto text-center space-y-4">
-                <span class="bg-brand-orange/20 text-brand-orange text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-brand-orange/30">
-                    Ação Social Click Dent
-                </span>
-                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Solicite sua Vaga Odontológica Gratuita</h2>
-                <p class="text-orange-150 text-sm md:text-base max-w-2xl mx-auto">
-                    O SiGOS facilita o acesso de estudantes de baixa renda a tratamentos odontológicos essenciais. Preencha seus dados de triagem e envie seus comprovantes para concorrer às cotas mensais.
-                </p>
-                <div class="flex flex-wrap justify-center gap-6 pt-4 text-xs text-orange-200">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-brand-orange"></i> Renda de até 5 Salários Mínimos
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-brand-orange"></i> Matrícula ativa no semestre
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-brand-orange"></i> Prioridade para menores rendas (Lógica 3x1)
-                    </div>
+        <!-- Links de Navegação do Menu Lateral -->
+        <nav class="flex-1 p-4 space-y-2">
+            <p class="text-[10px] text-orange-200/50 uppercase tracking-widest font-bold px-3 mb-2">Módulos</p>
+
+            <button onclick="switchView('aluno')" id="menu-aluno" class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 bg-brand-orange text-white">
+                <i class="fa-solid fa-user-graduate text-base"></i> Portal do Aluno
+            </button>
+
+            <button onclick="switchView('admin')" id="menu-admin" class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 text-orange-100 hover:bg-brand-orange/20">
+                <i class="fa-solid fa-folder-open text-base"></i> Triagem Secretaria
+            </button>
+
+            <button onclick="switchView('dentista')" id="menu-dentista" class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 text-orange-100 hover:bg-brand-orange/20">
+                <i class="fa-solid fa-stethoscope text-base"></i> Atendimento Clínico
+            </button>
+
+            <div class="pt-6 border-t border-brand-orange/10 mt-6">
+                <p class="text-[10px] text-orange-200/50 uppercase tracking-widest font-bold px-3 mb-2">Parceiros</p>
+                <div class="px-3 py-2 bg-[#2d0d05] rounded-xl border border-brand-orange/10 text-xs text-orange-200/80">
+                    <p class="font-bold text-brand-orange"><i class="fa-solid fa-building-shield"></i> Inova Simples</p>
+                    <p class="mt-1 text-[10px]">Clínica Click Dent</p>
                 </div>
             </div>
-        </section>
+        </nav>
 
-        <!-- Formulário de Inscrição Integrado -->
-        <main class="max-w-4xl mx-auto p-4 md:p-8">
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <div class="p-6 md:p-8 bg-brand-light border-b border-orange-100 flex items-center gap-4">
-                    <div class="p-3 bg-brand-orange text-white rounded-2xl text-xl">
-                        <i class="fa-solid fa-file-invoice"></i>
+        <!-- Footer da Sidebar -->
+        <div class="p-4 border-t border-brand-orange/10 text-center text-[10px] text-orange-300 bg-[#2d0d05]">
+            <p>Versão 1.4 Consolidada</p>
+            <p class="text-orange-400 mt-0.5">CEUB - Projeto Integrador I</p>
+        </div>
+    </aside>
+
+    <!-- CONTAINER DA ÁREA DE CONTEÚDO (DIREITA) -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+        <!-- HEADER TOP BAR COM AVATAR INTERATIVO -->
+        <header class="bg-white border-b border-slate-150 px-6 py-4 flex justify-between items-center z-30">
+            <div class="flex items-center gap-2">
+                <span class="text-xs bg-brand-orange/15 text-brand-orange font-bold px-3 py-1.5 rounded-full border border-brand-orange/25 uppercase" id="currentViewTag">
+                    Visão: Aluno
+                </span>
+            </div>
+
+            <!-- Avatar Dropdown do Bonequinho de Perfil (Inovação Figma) -->
+            <div class="relative">
+                <button onclick="toggleProfileDropdown()" class="flex items-center gap-3 bg-brand-light hover:bg-brand-orange/10 border border-brand-orange/20 px-4 py-2 rounded-2xl transition focus:outline-none">
+                    <div class="w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center text-sm font-bold shadow-sm">
+                        <i class="fa-solid fa-user-tie"></i>
                     </div>
-                    <div>
-                        <h3 class="font-bold text-lg text-brand-dark">Formulário de Candidatura Socioeconômica</h3>
-                        <p class="text-xs text-slate-500">Insira as informações do estudante para concorrer à vaga social</p>
+                    <div class="text-left hidden md:block">
+                        <p class="text-xs font-bold text-slate-800" id="profileName">Estudante Visitante</p>
+                        <p class="text-[9px] text-brand-orange uppercase font-bold" id="profileRole">Aluno</p>
                     </div>
-                </div>
+                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                </button>
 
-                <form id="enrollmentForm" onsubmit="handleFormSubmit(event)" class="p-6 md:p-8 space-y-6">
-                    <!-- Grid de Dados Pessoais -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome Completo</label>
-                            <input type="text" id="alunoNome" required placeholder="Ex: Jaqueline dos Santos" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">CPF do Estudante</label>
-                            <input type="text" id="alunoCPF" required placeholder="000.000.000-00" oninput="applyCpfMask(this)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Instituição de Ensino (IES)</label>
-                            <select id="alunoIES" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                                <option value="">Selecione sua Faculdade</option>
-                                <option value="UniCEUB">UniCEUB</option>
-                                <option value="UnB">UnB</option>
-                                <option value="UDF">UDF</option>
-                                <option value="IESB">IESB</option>
-                                <option value="Outra">Outra Instituição</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Curso / Período</label>
-                            <input type="text" id="alunoCurso" required placeholder="Ex: Direito - 4º Período" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Renda Familiar Bruta Mensal (R$)</label>
-                            <input type="number" step="0.01" id="alunoRenda" required placeholder="Ex: 2118.00" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">CEP Residencial</label>
-                            <input type="text" id="alunoCEP" required placeholder="00000-000" oninput="applyCepMask(this)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
-                        </div>
+                <!-- Menu de Seleção de Opções de Perfil (3 Opções requisitadas) -->
+                <div id="profileDropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-100 shadow-xl hidden overflow-hidden z-50">
+                    <div class="p-4 bg-brand-dark text-white">
+                        <h4 class="font-bold text-sm">Selecione o Perfil</h4>
+                        <p class="text-[10px] text-orange-200">Simulador de Acesso da Banca</p>
                     </div>
-
-                    <!-- Sessão de Upload de Arquivos (Inspirado no Design do Figma) -->
-                    <div class="border-t border-slate-100 pt-6">
-                        <h4 class="text-sm font-bold text-brand-dark mb-4">Documentação Comprobatória (Exigido pela Secretaria)</h4>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Dropzone Comprovante de Matrícula -->
-                            <div class="border-2 border-dashed border-slate-200 hover:border-brand-orange rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50/50" onclick="triggerFileUpload('fileMatricula')">
-                                <input type="file" id="fileMatricula" required class="hidden" onchange="updateFileLabel('fileMatricula', 'labelMatricula')">
-                                <span class="text-3xl text-slate-400 mb-2 block"><i class="fa-solid fa-file-pdf"></i></span>
-                                <span class="text-xs font-bold text-slate-600 block">Comprovante de Matrícula Ativa</span>
-                                <span id="labelMatricula" class="text-[10px] text-slate-400 mt-1 block">Clique para selecionar (PDF, JPG, PNG)</span>
+                    <div class="divide-y divide-slate-50 text-sm">
+                        <!-- Opção 1: Aluno -->
+                        <button onclick="switchView('aluno'); toggleProfileDropdown();" class="w-full text-left px-4 py-3 hover:bg-slate-50 text-slate-700 flex items-center gap-3 font-semibold transition">
+                            <span class="w-8 h-8 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center"><i class="fa-solid fa-user-graduate"></i></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Camile Medina</p>
+                                <p class="text-[10px] text-slate-400">Aluno (Portal do Aluno)</p>
                             </div>
-
-                            <!-- Dropzone Comprovante de Renda -->
-                            <div class="border-2 border-dashed border-slate-200 hover:border-brand-orange rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50/50" onclick="triggerFileUpload('fileRenda')">
-                                <input type="file" id="fileRenda" required class="hidden" onchange="updateFileLabel('fileRenda', 'labelRenda')">
-                                <span class="text-3xl text-slate-400 mb-2 block"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span class="text-xs font-bold text-slate-600 block">Declaração de Renda Familiar</span>
-                                <span id="labelRenda" class="text-[10px] text-slate-400 mt-1 block">Clique para selecionar (PDF, JPG, PNG)</span>
+                        </button>
+                        <!-- Opção 2: Secretaria -->
+                        <button onclick="switchView('admin'); toggleProfileDropdown();" class="w-full text-left px-4 py-3 hover:bg-slate-50 text-slate-700 flex items-center gap-3 font-semibold transition">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-user-tie"></i></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Jaqueline (Secretaria)</p>
+                                <p class="text-[10px] text-slate-400">Secretaria (Triagem & Cotas)</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Botão de Envio -->
-                    <div class="pt-4 flex justify-end">
-                        <button type="submit" class="w-full md:w-auto bg-brand-orange hover:bg-orange-600 text-white font-bold text-sm px-8 py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-paper-plane"></i> Solicitar Vaga e Enviar Documentos
+                        </button>
+                        <!-- Opção 3: Dentista -->
+                        <button onclick="switchView('dentista'); toggleProfileDropdown();" class="w-full text-left px-4 py-3 hover:bg-slate-50 text-slate-700 flex items-center gap-3 font-semibold transition">
+                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-user-doctor"></i></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Dr. Daniel Luz</p>
+                                <p class="text-[10px] text-slate-400">Dentista (Fila de Atendimento)</p>
+                            </div>
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
-        </main>
-    </div>
+        </header>
 
-    <!-- ========================================== -->
-    <!-- TELA 2: PAINEL DA SECRETARIA (JAQUELINE) -->
-    <!-- ========================================== -->
-    <div id="adminView" class="view-panel hidden transition-all duration-300">
-        <!-- Conteúdo Principal -->
-        <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- Painel Lateral: Controle de Cotas (Regra de Negócio RF003) -->
-            <section class="lg:col-span-1 space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 class="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-brand-orange"></i> Controle de Cota Mensal
-                    </h2>
-
-                    <!-- Progresso da Cota (Dinamizado por JS) -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-slate-500 font-medium">Vagas Sociais Preenchidas</span>
-                            <span id="quotaText" class="font-bold text-brand-orange">2 de 3 vagas</span>
+        <!-- ========================================== -->
+        <!-- TELA 1: PORTAL DO ALUNO -->
+        <!-- ========================================== -->
+        <div id="alunoView" class="view-panel transition-all duration-300 block">
+            <!-- Banner de Boas-Vindas & Regras -->
+            <section class="bg-gradient-to-r from-brand-dark to-[#2d0d05] text-white py-12 px-6 border-b border-brand-orange/15 relative">
+                <div class="max-w-4xl mx-auto text-center space-y-4">
+                    <span class="bg-brand-orange/20 text-brand-orange text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-brand-orange/30">
+                        Ação Social Click Dent
+                    </span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Solicite sua Vaga Odontológica Gratuita</h2>
+                    <p class="text-orange-100 text-sm md:text-base max-w-2xl mx-auto">
+                        O SiGOS facilita o acesso de estudantes de baixa renda a tratamentos odontológicos essenciais. Preencha seus dados de triagem e envie seus comprovantes para concorrer às cotas mensais.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-6 pt-4 text-xs text-orange-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-brand-orange"></i> Renda de até 5 Salários Mínimos
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-3">
-                            <div id="progressBar" class="bg-brand-orange h-3 rounded-full transition-all duration-500" style="width: 66.6%"></div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-brand-orange"></i> Matrícula ativa no semestre
                         </div>
-                        <p id="quotaHelper" class="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                            <i class="fa-solid fa-circle-check"></i> Há 1 vaga social disponível para este mês.
-                        </p>
-                    </div>
-
-                    <!-- Detalhes do Impacto Social (ACE) -->
-                    <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
-                        <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                            <p class="text-xs text-brand-dark font-semibold">Investimento Social</p>
-                            <p id="investmentValue" class="text-lg font-bold text-brand-orange">R$ 1.736,00</p>
-                            <p class="text-[10px] text-slate-400">Total doado/mês</p>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-xs text-slate-600 font-semibold">Alunos Atendidos</p>
-                            <p class="text-lg font-bold text-brand-dark">12 Alunos</p>
-                            <p class="text-[10px] text-slate-400">Neste semestre</p>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-brand-orange"></i> Prioridade para menores rendas (Lógica 3x1)
                         </div>
                     </div>
-                </div>
-
-                <!-- Regras de Elegibilidade Visuais -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider">Regras de Validação Ativas</h3>
-                    <ul class="space-y-3 text-xs text-slate-600">
-                        <li class="flex items-start space-x-2">
-                            <span class="text-brand-orange font-bold">✔</span>
-                            <span><strong>RN01 (Renda):</strong> Alunos com renda familiar de até 5 salários mínimos.</span>
-                        </li>
-                        <li class="flex items-start space-x-2">
-                            <span class="text-brand-orange font-bold">✔</span>
-                            <span><strong>RN02 (Cota 3x1):</strong> Ordenação automática priorizando as menores rendas.</span>
-                        </li>
-                        <li class="flex items-start space-x-2">
-                            <span class="text-brand-orange font-bold">✔</span>
-                            <span><strong>RN04 (No-Show):</strong> Bloqueio de CPF por 6 meses em caso de falta não justificada.</span>
-                        </li>
-                    </ul>
                 </div>
             </section>
 
-            <!-- Tabela Central: Fila de Triagem Social -->
-            <section class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <!-- Formulário de Inscrição Integrado -->
+            <main class="max-w-4xl mx-auto p-4 md:p-8">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-6 md:p-8 bg-brand-light border-b border-orange-100 flex items-center gap-4">
+                        <div class="p-3 bg-brand-orange text-white rounded-2xl text-xl">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
                         <div>
-                            <h2 class="text-lg font-bold text-brand-dark">Fila de Espera para Vagas Sociais</h2>
-                            <p class="text-xs text-slate-400">Análise e validação dos comprovantes acadêmicos e de renda</p>
+                            <h3 class="font-bold text-lg text-brand-dark">Formulário de Candidatura Socioeconômica</h3>
+                            <p class="text-xs text-slate-500">Insira as informações do estudante para concorrer à vaga social</p>
                         </div>
-                        <span id="pendingBadge" class="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">
-                            2 Pendentes
-                        </span>
                     </div>
 
-                    <!-- Tabela de Alunos -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase border-b border-slate-100">
-                                    <th class="p-4">Estudante</th>
-                                    <th class="p-4">Faculdade / Curso</th>
-                                    <th class="p-4">Renda Informada</th>
-                                    <th class="p-4">Documentos</th>
-                                    <th class="p-4 text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="studentTableBody" class="divide-y divide-slate-100 text-sm">
+                    <form id="enrollmentForm" onsubmit="handleFormSubmit(event)" class="p-6 md:p-8 space-y-6">
+                        <!-- Grid de Dados Pessoais -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome Completo</label>
+                                <input type="text" id="alunoNome" required placeholder="Ex: Carlos Henrique Souza" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">CPF do Estudante</label>
+                                <input type="text" id="alunoCPF" required placeholder="000.000.000-00" oninput="applyCpfMask(this)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Instituição de Ensino (IES)</label>
+                                <select id="alunoIES" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                                    <option value="">Selecione sua Faculdade</option>
+                                    <option value="UniCEUB">UniCEUB</option>
+                                    <option value="UnB">UnB</option>
+                                    <option value="UDF">UDF</option>
+                                    <option value="IESB">IESB</option>
+                                    <option value="Outra">Outra Instituição</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Curso / Período</label>
+                                <input type="text" id="alunoCurso" required placeholder="Ex: Direito - 4º Período" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Renda Familiar Bruta Mensal (R$)</label>
+                                <input type="number" step="0.01" id="alunoRenda" required placeholder="Ex: 2118.00" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">CEP Residencial</label>
+                                <input type="text" id="alunoCEP" required placeholder="00000-000" oninput="applyCepMask(this)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                            </div>
+                        </div>
 
-                                <!-- Estudante 1 -->
-                                <tr id="row-carlos" class="hover:bg-slate-50/50 transition">
-                                    <td class="p-4">
-                                        <div class="font-bold text-slate-700">Carlos Henrique Souza</div>
-                                        <div class="text-xs text-slate-400">CPF: 045.***.***-12</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="text-slate-600 font-semibold">UnB</div>
-                                        <div class="text-xs text-slate-400">Eng. de Software (3º Semestre)</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="text-slate-600 font-bold text-brand-dark">R$ 2.118,00</div>
-                                        <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Elegível</span>
-                                    </td>
-                                    <td class="p-4 space-y-1">
-                                        <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
-                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Matrícula_Carlos.pdf
-                                        </a>
-                                        <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
-                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Renda_Carlos.pdf
-                                        </a>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="flex justify-center space-x-2">
-                                            <button onclick="approveStudent('carlos')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
-                                                Aprovar
-                                            </button>
-                                            <button onclick="rejectStudent('carlos')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-                                                Reprovar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                        <!-- Sessão de Upload de Arquivos (Inspirado no Design do Figma) -->
+                        <div class="border-t border-slate-100 pt-6">
+                            <h4 class="text-sm font-bold text-brand-dark mb-4">Documentação Comprobatória (Exigido pela Secretaria)</h4>
 
-                                <!-- Estudante 2 -->
-                                <tr id="row-mariana" class="hover:bg-slate-50/50 transition">
-                                    <td class="p-4">
-                                        <div class="font-bold text-slate-700">Mariana de Oliveira</div>
-                                        <div class="text-xs text-slate-400">CPF: 859.***.***-34</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="text-slate-600 font-semibold">CEUB</div>
-                                        <div class="text-xs text-slate-400">Nutrição (5º Semestre)</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="text-slate-600 font-bold text-brand-dark">R$ 3.106,40</div>
-                                        <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Elegível</span>
-                                    </td>
-                                    <td class="p-4 space-y-1">
-                                        <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
-                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Matrícula_Mariana.pdf
-                                        </a>
-                                        <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
-                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Renda_Mariana.pdf
-                                        </a>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="flex justify-center space-x-2">
-                                            <button onclick="approveStudent('mariana')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
-                                                Aprovar
-                                            </button>
-                                            <button onclick="rejectStudent('mariana')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-                                                Reprovar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Dropzone Comprovante de Matrícula -->
+                                <div class="border-2 border-dashed border-slate-200 hover:border-brand-orange rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50/50" onclick="triggerFileUpload('fileMatricula')">
+                                    <input type="file" id="fileMatricula" required class="hidden" onchange="updateFileLabel('fileMatricula', 'labelMatricula')">
+                                    <span class="text-3xl text-slate-400 mb-2 block"><i class="fa-solid fa-file-pdf"></i></span>
+                                    <span class="text-xs font-bold text-slate-600 block">Comprovante de Matrícula Ativa</span>
+                                    <span id="labelMatricula" class="text-[10px] text-slate-400 mt-1 block">Clique para selecionar (PDF, JPG, PNG)</span>
+                                </div>
 
-                                <!-- Estudante 3 (Aprovado estático para demonstração de histórico) -->
-                                <tr class="bg-slate-50/40 text-slate-400">
-                                    <td class="p-4">
-                                        <div class="font-bold text-slate-400">Julia Alencar Martins</div>
-                                        <div class="text-xs">CPF: 412.***.***-56</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div>IESB</div>
-                                        <div class="text-xs">Direito (2º Semestre)</div>
-                                    </td>
-                                    <td class="p-4">
-                                        <div class="font-bold">R$ 1.129,60</div>
-                                        <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-medium">Atendida</span>
-                                    </td>
-                                    <td class="p-4">
-                                        <span class="text-xs line-through text-slate-400">Matrícula_Julia.pdf</span>
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                                            <i class="fa-solid fa-check"></i> Cota Confirmada
-                                        </span>
-                                    </td>
-                                </tr>
+                                <!-- Dropzone Comprovante de Renda -->
+                                <div class="border-2 border-dashed border-slate-200 hover:border-brand-orange rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50/50" onclick="triggerFileUpload('fileRenda')">
+                                    <input type="file" id="fileRenda" required class="hidden" onchange="updateFileLabel('fileRenda', 'labelRenda')">
+                                    <span class="text-3xl text-slate-400 mb-2 block"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                                    <span class="text-xs font-bold text-slate-600 block">Declaração de Renda Familiar</span>
+                                    <span id="labelRenda" class="text-[10px] text-slate-400 mt-1 block">Clique para selecionar (PDF, JPG, PNG)</span>
+                                </div>
+                            </div>
+                        </div>
 
-                            </tbody>
-                        </table>
-                    </div>
+                        <!-- Botão de Envio -->
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" class="w-full md:w-auto bg-brand-orange hover:bg-orange-600 text-white font-bold text-sm px-8 py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> Solicitar Vaga e Enviar Documentos
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </section>
+            </main>
+        </div>
 
-        </main>
+        <!-- ========================================== -->
+        <!-- TELA 2: PAINEL DA SECRETARIA -->
+        <!-- ========================================== -->
+        <div id="adminView" class="view-panel hidden transition-all duration-300">
+            <main class="max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Painel Lateral: Controle de Cotas (Regra de Negócio RF003) -->
+                <section class="lg:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-brand-orange"></i> Controle de Cota Mensal
+                        </h2>
+
+                        <!-- Progresso da Cota (Dinamizado por JS) -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 font-medium">Vagas Sociais Preenchidas</span>
+                                <span id="quotaText" class="font-bold text-brand-orange">2 de 3 vagas</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3">
+                                <div id="progressBar" class="bg-brand-orange h-3 rounded-full transition-all duration-500" style="width: 66.6%"></div>
+                            </div>
+                            <p id="quotaHelper" class="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-circle-check"></i> Há 1 vaga social disponível para este mês.
+                            </p>
+                        </div>
+
+                        <!-- Detalhes do Impacto Social (ACE) -->
+                        <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+                            <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                <p class="text-xs text-brand-dark font-semibold">Investimento Social</p>
+                                <p id="investmentValue" class="text-lg font-bold text-brand-orange">R$ 1.736,00</p>
+                                <p class="text-[10px] text-slate-400">Total doado/mês</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p class="text-xs text-slate-600 font-semibold">Alunos Atendidos</p>
+                                <p class="text-lg font-bold text-brand-dark">12 Alunos</p>
+                                <p class="text-[10px] text-slate-400">Neste semestre</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Regras de Elegibilidade Visuais -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider">Regras de Validação Ativas</h3>
+                        <ul class="space-y-3 text-xs text-slate-600">
+                            <li class="flex items-start space-x-2">
+                                <span class="text-brand-orange font-bold">✔</span>
+                                <span><strong>RN01 (Renda):</strong> Alunos com renda familiar de até 5 salários mínimos.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-brand-orange font-bold">✔</span>
+                                <span><strong>RN02 (Cota 3x1):</strong> Ordenação automática priorizando as menores rendas.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-brand-orange font-bold">✔</span>
+                                <span><strong>RN04 (No-Show):</strong> Bloqueio de CPF por 6 meses em caso de falta não justificada.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Tabela Central: Fila de Triagem Social -->
+                <section class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h2 class="text-lg font-bold text-brand-dark">Fila de Espera para Vagas Sociais</h2>
+                                <p class="text-xs text-slate-400">Análise e validação dos comprovantes acadêmicos e de renda</p>
+                            </div>
+                            <span id="pendingBadge" class="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                2 Pendentes
+                            </span>
+                        </div>
+
+                        <!-- Tabela de Alunos -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase border-b border-slate-100">
+                                        <th class="p-4">Estudante</th>
+                                        <th class="p-4">Faculdade / Curso</th>
+                                        <th class="p-4">Renda Informada</th>
+                                        <th class="p-4">Documentos</th>
+                                        <th class="p-4 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentTableBody" class="divide-y divide-slate-100 text-sm">
+
+                                    <!-- Estudante 1 -->
+                                    <tr id="row-carlos" class="hover:bg-slate-50/50 transition">
+                                        <td class="p-4">
+                                            <div class="font-bold text-slate-700">Carlos Henrique Souza</div>
+                                            <div class="text-xs text-slate-400">CPF: 045.***.***-12</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-semibold">UnB</div>
+                                            <div class="text-xs text-slate-400">Eng. de Software (3º Semestre)</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-bold text-brand-dark">R$ 2.118,00</div>
+                                            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Elegível</span>
+                                        </td>
+                                        <td class="p-4 space-y-1">
+                                            <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                                                <i class="fa-solid fa-file-pdf text-red-500"></i> Matricula_Carlos.pdf
+                                            </a>
+                                            <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                                                <i class="fa-solid fa-file-pdf text-red-500"></i> Renda_Carlos.pdf
+                                            </a>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex justify-center space-x-2">
+                                                <button onclick="approveStudent('carlos')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
+                                                    Aprovar
+                                                </button>
+                                                <button onclick="rejectStudent('carlos')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                                                    Reprovar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Estudante 2 -->
+                                    <tr id="row-mariana" class="hover:bg-slate-50/50 transition">
+                                        <td class="p-4">
+                                            <div class="font-bold text-slate-700">Mariana de Oliveira</div>
+                                            <div class="text-xs text-slate-400">CPF: 859.***.***-34</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-semibold">CEUB</div>
+                                            <div class="text-xs text-slate-400">Nutrição (5º Semestre)</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-bold text-brand-dark">R$ 3.106,40</div>
+                                            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Elegível</span>
+                                        </td>
+                                        <td class="p-4 space-y-1">
+                                            <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                                                <i class="fa-solid fa-file-pdf text-red-500"></i> Matricula_Mariana.pdf
+                                            </a>
+                                            <a href="#" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                                                <i class="fa-solid fa-file-pdf text-red-500"></i> Renda_Mariana.pdf
+                                            </a>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex justify-center space-x-2">
+                                                <button onclick="approveStudent('mariana')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
+                                                    Aprovar
+                                                </button>
+                                                <button onclick="rejectStudent('mariana')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                                                    Reprovar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Estudante 3 (Aprovado estático para demonstração de histórico) -->
+                                    <tr class="bg-slate-50/40 text-slate-400">
+                                        <td class="p-4">
+                                            <div class="font-bold text-slate-400">Julia Alencar Martins</div>
+                                            <div class="text-xs">CPF: 412.***.***-56</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div>IESB</div>
+                                            <div class="text-xs">Direito (2º Semestre)</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="font-bold">R$ 1.129,60</div>
+                                            <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-medium">Atendida</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-xs line-through text-slate-400">Matricula_Julia.pdf</span>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                                <i class="fa-solid fa-check"></i> Cota Confirmada
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TELA 3: PAINEL DO DENTISTA (NOVA TELA) -->
+        <!-- ========================================== -->
+        <div id="dentistaView" class="view-panel hidden transition-all duration-300">
+            <main class="max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Monitor de Cadeira Clínica e Timer Ativo (Requisito RF005) -->
+                <section class="lg:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chair text-brand-orange"></i> Monitoramento de Cadeira
+                        </h2>
+
+                        <!-- Stopwatch Ativo -->
+                        <div class="p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center space-y-3">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">Tempo de Cadeira Ativo</p>
+                            <div id="chairTimer" class="text-4xl font-black font-mono text-brand-dark transition-all duration-300">00:00:00</div>
+                            <span id="timerBadge" class="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Cadeira Vazia</span>
+
+                            <!-- Explicativo da Simulação para a Banca -->
+                            <div class="p-3 bg-brand-light border border-brand-orange/20 rounded-xl text-left mt-2">
+                                <p class="text-[10px] text-brand-dark leading-snug">
+                                    <i class="fa-solid fa-circle-info text-brand-orange"></i> <strong>Modo Simulação:</strong> Para fins de avaliação, o timer alertará ultrapassagem de 1h15 de forma simulada em 15 segundos de teste acelerado.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Detalhes do Procedimento Selecionado -->
+                        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100 mt-4 text-xs space-y-2">
+                            <p class="text-slate-500 font-semibold uppercase text-[10px]">Procedimento em Andamento</p>
+                            <p id="dentalPatientName" class="font-bold text-slate-800 text-sm">- Nenhum -</p>
+                            <p id="dentalProcName" class="text-slate-600">-</p>
+                            <p id="dentalProcValue" class="font-bold text-emerald-600">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Apoio Clínico -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider">Regras de Conduta Clínica</h3>
+                        <ul class="space-y-3 text-xs text-slate-600">
+                            <li class="flex items-start space-x-2">
+                                <span class="text-brand-orange font-bold">✔</span>
+                                <span><strong>RF005 (Cadeira):</strong> Limite rígido de 1h15 (75 minutos) de cadeira para não inviabilizar pacientes particulares pagantes.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-brand-orange font-bold">✔</span>
+                                <span><strong>RN05 (No-Show):</strong> Faltas injustificadas bloqueiam agendamento social por 180 dias de forma irreversível na base de dados.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Lista de Fila de Atendimento do Dentista -->
+                <section class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h2 class="text-lg font-bold text-brand-dark">Fila Clínica Diária</h2>
+                                <p class="text-xs text-slate-400">Atendimentos sociais autorizados para o dia de hoje</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                2 Consultas
+                            </span>
+                        </div>
+
+                        <!-- Tabela de Pacientes na Fila -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase border-b border-slate-100">
+                                        <th class="p-4">Estudante</th>
+                                        <th class="p-4">Procedimento</th>
+                                        <th class="p-4">Valor Social (Tabela)</th>
+                                        <th class="p-4 text-center">Controle Técnico</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dentalQueueBody" class="divide-y divide-slate-100 text-sm">
+
+                                    <!-- Paciente 1 -->
+                                    <tr id="dentist-row-carlos" class="hover:bg-slate-50/50 transition">
+                                        <td class="p-4">
+                                            <div class="font-bold text-slate-700">Carlos Henrique Souza</div>
+                                            <div class="text-xs text-slate-400">CPF: 045.***.***-12 | UnB</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-semibold">Extração Simples / Remoção de Siso</div>
+                                            <div class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> Tempo Ref: 1h15</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-bold text-emerald-600">R$ 132,00</div>
+                                            <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Subsídio Social</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex flex-col gap-2 justify-center items-center">
+                                                <button id="btnStart-carlos" onclick="startDentalProcedure('carlos', 'Carlos Henrique Souza', 'Extração Simples / Remoção de Siso', 'R$ 132,00')" class="w-full bg-brand-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">
+                                                    Iniciar Consulta
+                                                </button>
+                                                <div class="flex gap-1 w-full">
+                                                    <button id="btnComplete-carlos" onclick="completeDentalProcedure('carlos')" disabled class="w-1/2 bg-slate-100 text-slate-400 text-xs px-2 py-1.5 rounded-lg font-medium transition cursor-not-allowed">
+                                                        Concluir
+                                                    </button>
+                                                    <button id="btnNoShow-carlos" onclick="triggerNoShow('carlos', 'Carlos Henrique Souza')" class="w-1/2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-2 py-1.5 rounded-lg font-medium transition">
+                                                        No-Show
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Paciente 2 -->
+                                    <tr id="dentist-row-mariana" class="hover:bg-slate-50/50 transition">
+                                        <td class="p-4">
+                                            <div class="font-bold text-slate-700">Mariana de Oliveira</div>
+                                            <div class="text-xs text-slate-400">CPF: 859.***.***-34 | CEUB</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-semibold">Profilaxia (Limpeza)</div>
+                                            <div class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> Tempo Ref: 45 min</div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-slate-600 font-bold text-emerald-600">R$ 274,00</div>
+                                            <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Subsídio Social</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex flex-col gap-2 justify-center items-center">
+                                                <button id="btnStart-mariana" onclick="startDentalProcedure('mariana', 'Mariana de Oliveira', 'Profilaxia (Limpeza)', 'R$ 274,00')" class="w-full bg-brand-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">
+                                                    Iniciar Consulta
+                                                </button>
+                                                <div class="flex gap-1 w-full">
+                                                    <button id="btnComplete-mariana" onclick="completeDentalProcedure('mariana')" disabled class="w-1/2 bg-slate-100 text-slate-400 text-xs px-2 py-1.5 rounded-lg font-medium transition cursor-not-allowed">
+                                                        Concluir
+                                                    </button>
+                                                    <button id="btnNoShow-mariana" onclick="triggerNoShow('mariana', 'Mariana de Oliveira')" class="w-1/2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-2 py-1.5 rounded-lg font-medium transition">
+                                                        No-Show
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
     </div>
 
-    <!-- Rodapé -->
-    <footer class="bg-brand-dark text-slate-400 text-center py-6 border-t border-slate-800 mt-auto">
-        <p class="text-xs">© 2026 SiGOS - Projeto Integrador em parceria com Click Dent e Inova Simples.</p>
-        <p class="text-[10px] text-slate-600 mt-1">Desenvolvido em conformidade com as diretrizes da LGPD (Lei Geral de Proteção de Dados).</p>
-    </footer>
+    <!-- MODAL DE CONFIRMAÇÃO DE BLOQUEIO POR NO-SHOW (Customizado para substituir alert/confirm) -->
+    <div id="noShowModal" class="fixed inset-0 bg-brand-dark/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white max-w-md w-full mx-4 rounded-3xl overflow-hidden shadow-2xl border border-slate-100">
+            <div class="p-6 bg-rose-600 text-white flex items-center gap-3">
+                <span class="text-2xl"><i class="fa-solid fa-user-slash"></i></span>
+                <div>
+                    <h3 class="font-bold text-lg">Registrar No-Show?</h3>
+                    <p class="text-xs text-rose-100">Confirmação de aplicação de penalidade</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Você está prestes a registrar uma falta não justificada para <strong id="modalPatientName" class="text-brand-dark"></strong>.
+                </p>
+                <div class="p-3 bg-rose-50 border border-rose-100 rounded-2xl text-xs text-rose-700">
+                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Consequência Lógica (RN05):</p>
+                    <p class="mt-1">Esta ação bloqueará automaticamente o CPF do estudante por <strong>180 dias (6 meses)</strong>, impossibilitando qualquer novo agendamento social durante o período.</p>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeNoShowModal()" class="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition">Cancelar</button>
+                <button id="modalConfirmBtn" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-md">Sim, Bloquear Aluno</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Lógica de Simulação Interativa (JS) -->
+    <!-- SCRIPTS DE ORQUESTRAÇÃO INTERATIVA -->
     <script>
         let approvedCount = 0;
         let totalPending = 2;
         let activeView = 'aluno';
 
-        // Estrutura em memória para novos cadastros
+        // Estado da Cadeira Clínica e Cronômetro
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let activePatientId = null;
+
+        // Estrutura em memória para novos cadastros de simulação
         const customStudents = [];
 
-        // Alternador de Visualização
+        // Alternador de Visualização (Menu Lateral e Dropdown Sincronizados)
         function switchView(view) {
             activeView = view;
+
+            // Paineis de Conteúdo
             const alunoPanel = document.getElementById('alunoView');
             const adminPanel = document.getElementById('adminView');
-            const btnAluno = document.getElementById('btnAlunoView');
-            const btnAdmin = document.getElementById('btnAdminView');
-            const userBadge = document.getElementById('loggedUser');
+            const dentistaPanel = document.getElementById('dentistaView');
+
+            // Classes dos Botões do Menu Lateral
+            const menuAluno = document.getElementById('menu-aluno');
+            const menuAdmin = document.getElementById('menu-admin');
+            const menuDentista = document.getElementById('menu-dentista');
+
+            // Badge de Visão Ativa
+            const currentViewTag = document.getElementById('currentViewTag');
+
+            // Dados de Perfil
+            const profileName = document.getElementById('profileName');
+            const profileRole = document.getElementById('profileRole');
+
+            // Reset de estilos do menu lateral
+            const inactiveStyle = "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 text-orange-100 hover:bg-brand-orange/20";
+            const activeStyle = "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 bg-brand-orange text-white shadow-md";
+
+            menuAluno.className = inactiveStyle;
+            menuAdmin.className = inactiveStyle;
+            menuDentista.className = inactiveStyle;
+
+            // Oculta todas as telas
+            alunoPanel.classList.add('hidden');
+            adminPanel.classList.add('hidden');
+            dentistaPanel.classList.add('hidden');
 
             if (view === 'aluno') {
                 alunoPanel.classList.remove('hidden');
-                adminPanel.classList.add('hidden');
-                btnAluno.className = "px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-brand-orange text-white";
-                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-orange-200 hover:text-white";
-                userBadge.innerText = "Estudante Visitante";
-            } else {
-                alunoPanel.classList.add('hidden');
+                menuAluno.className = activeStyle;
+                currentViewTag.innerText = "Visão: Aluno";
+                profileName.innerText = "Camile Medina";
+                profileRole.innerText = "Aluno";
+            } else if (view === 'admin') {
                 adminPanel.classList.remove('hidden');
-                btnAluno.className = "px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-orange-200 hover:text-white";
-                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-brand-orange text-white";
-                userBadge.innerText = "Jaqueline dos Santos";
+                menuAdmin.className = activeStyle;
+                currentViewTag.innerText = "Visão: Secretaria";
+                profileName.innerText = "Jaqueline dos Santos";
+                profileRole.innerText = "Secretaria";
+            } else if (view === 'dentista') {
+                dentistaPanel.classList.remove('hidden');
+                menuDentista.className = activeStyle;
+                currentViewTag.innerText = "Visão: Dentista";
+                profileName.innerText = "Dr. Daniel Luz";
+                profileRole.innerText = "Dentista";
             }
+        }
+
+        // Abrir/Fechar Dropdown do Perfil
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('hidden');
         }
 
         // Trigger para uploads
@@ -442,7 +742,7 @@
             }
         }
 
-        // Máscaras Dinâmicas
+        // Máscaras Dinâmicas para Inputs
         function applyCpfMask(input) {
             let value = input.value.replace(/\D/g, "");
             if (value.length > 11) value = value.slice(0, 11);
@@ -459,7 +759,7 @@
             input.value = value;
         }
 
-        // Submissão do Formulário de Aluno
+        // Submissão do Formulário de Aluno (Novos Alunos na Simulação)
         function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -470,27 +770,17 @@
             const renda = parseFloat(document.getElementById('alunoRenda').value);
             const cep = document.getElementById('alunoCEP').value;
 
-            // Criar ID amigável para manipulação na DOM
             const studentId = 'student-' + Date.now();
 
-            // Adicionar ao array de simulação
-            const newStudent = {
-                id: studentId,
-                nome,
-                cpf,
-                ies,
-                curso,
-                renda,
-                cep
-            };
-
+            const newStudent = { id: studentId, nome, cpf, ies, curso, renda, cep };
             customStudents.push(newStudent);
 
-            // Adicionar elemento na tabela da Secretaria
-            appendStudentToTable(newStudent);
+            // Adiciona elementos nas tabelas da Secretaria e do Dentista
+            appendStudentToSecretariaTable(newStudent);
+            appendStudentToDentistTable(newStudent);
 
-            // Feedback Visual de Sucesso
-            showToast("Sucesso!", `Inscrição de ${nome} enviada para análise.`);
+            // Toast de Sucesso
+            showToast("Solicitação Enviada!", `Inscrição de ${nome} encaminhada para análise.`);
 
             // Resetar formulário
             document.getElementById('enrollmentForm').reset();
@@ -499,24 +789,20 @@
             document.getElementById('labelRenda').innerText = "Clique para selecionar (PDF, JPG, PNG)";
             document.getElementById('labelRenda').className = "text-[10px] text-slate-400 mt-1 block";
 
-            // Incrementar pendentes
             totalPending++;
             document.getElementById('pendingBadge').innerText = `${totalPending - approvedCount} Pendentes`;
 
-            // Mudar para tela da secretaria para que o usuário veja a aprovação
+            // Mudar para o painel de triagem da secretaria automaticamente após a submissão
             setTimeout(() => {
                 switchView('admin');
-            }, 1500);
+            }, 1200);
         }
 
-        // Função para Adicionar Nova Linha na Tabela
-        function appendStudentToTable(student) {
+        // Adiciona Aluno Cadastrado à Tabela de Triagem da Secretaria
+        function appendStudentToSecretariaTable(student) {
             const tbody = document.getElementById('studentTableBody');
-
-            // Formatador de Moeda
             const formattedRenda = student.renda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            // Verifica elegibilidade baseada em 5 Salários Mínimos (R$ 1.412,00 * 5 = R$ 7.060,00)
             const isElegible = student.renda <= 7060;
             const badgeClass = isElegible ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800';
             const badgeText = isElegible ? 'Elegível' : 'Excede Limite';
@@ -557,16 +843,208 @@
                     </td>
                 `;
 
-            // Insere no topo da lista antes dos estáticos/atendidos
             tbody.insertBefore(newRow, tbody.firstChild);
         }
 
-        // Lógica de Aprovação
+        // Adiciona Aluno Cadastrado à Tabela do Consultório do Dentista
+        function appendStudentToDentistTable(student) {
+            const tbody = document.getElementById('dentalQueueBody');
+
+            const newRow = document.createElement('tr');
+            newRow.id = `dentist-row-${student.id}`;
+            newRow.className = "hover:bg-slate-50/50 transition";
+            newRow.innerHTML = `
+                    <td class="p-4">
+                        <div class="font-bold text-slate-700">${student.nome}</div>
+                        <div class="text-xs text-slate-400">CPF: ${student.cpf} | ${student.ies}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-slate-600 font-semibold">Avaliação Inicial</div>
+                        <div class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> Tempo Ref: 1h15</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-slate-600 font-bold text-emerald-600">R$ 350,00</div>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Subsídio Social</span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex flex-col gap-2 justify-center items-center">
+                            <button id="btnStart-${student.id}" onclick="startDentalProcedure('${student.id}', '${student.nome}', 'Avaliação Inicial', 'R$ 350,00')" class="w-full bg-brand-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">
+                                Iniciar Consulta
+                            </button>
+                            <div class="flex gap-1 w-full">
+                                <button id="btnComplete-${student.id}" onclick="completeDentalProcedure('${student.id}')" disabled class="w-1/2 bg-slate-100 text-slate-400 text-xs px-2 py-1.5 rounded-lg font-medium transition cursor-not-allowed">
+                                    Concluir
+                                </button>
+                                <button id="btnNoShow-${student.id}" onclick="triggerNoShow('${student.id}', '${student.nome}')" class="w-1/2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs px-2 py-1.5 rounded-lg font-medium transition">
+                                    No-Show
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+
+            tbody.insertBefore(newRow, tbody.firstChild);
+        }
+
+        // INICIAR CONSULTA NO DENTISTA (RF005 / Cronômetro e Alertas)
+        function startDentalProcedure(id, name, procedure, value) {
+            // Se já há um atendimento ativo, para o anterior
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            activePatientId = id;
+            secondsElapsed = 0;
+
+            // Atualiza Painel de Monitoramento
+            document.getElementById('dentalPatientName').innerText = name;
+            document.getElementById('dentalProcName').innerText = procedure;
+            document.getElementById('dentalProcValue').innerText = value;
+
+            const timerBadge = document.getElementById('timerBadge');
+            timerBadge.innerText = "Em Atendimento";
+            timerBadge.className = "inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase";
+
+            // Habilita o botão de conclusão para este paciente específico
+            document.getElementById(`btnComplete-${id}`).disabled = false;
+            document.getElementById(`btnComplete-${id}`).className = "w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1.5 rounded-lg font-medium transition";
+
+            // Altera botão de Iniciar para Ativo
+            document.getElementById(`btnStart-${id}`).innerText = "Consulta Ativa...";
+            document.getElementById(`btnStart-${id}`).className = "w-full bg-[#5c1c0a] text-orange-200 text-xs px-3 py-1.5 rounded-lg font-bold cursor-not-allowed";
+            document.getElementById(`btnStart-${id}`).disabled = true;
+
+            // Inicia Cronômetro
+            const timerElement = document.getElementById('chairTimer');
+            timerElement.className = "text-4xl font-black font-mono text-brand-dark transition-all duration-300";
+
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                timerElement.innerText = formatTime(secondsElapsed);
+
+                // SIMULAÇÃO DO ALERTA DE 1H15 (Simulação acelerada: 15 segundos equivalem a 1h15)
+                if (secondsElapsed >= 15) {
+                    timerElement.className = "text-4xl font-black font-mono text-red-600 transition-all duration-300 animate-blink-red rounded-xl px-2 py-1";
+                    timerBadge.innerText = "Alerta: Limite Excedido!";
+                    timerBadge.className = "inline-block bg-red-100 text-red-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase animate-pulse";
+                }
+            }, 1000);
+
+            showToast("Consulta Iniciada", `Tempo de cadeira ativado para ${name}.`);
+        }
+
+        // Formatação do Cronômetro
+        function formatTime(totalSeconds) {
+            const hrs = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${hrs}:${mins}:${secs}`;
+        }
+
+        // CONCLUIR CONSULTA NO DENTISTA
+        function completeDentalProcedure(id) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            // Para o visual do timer
+            const timerElement = document.getElementById('chairTimer');
+            timerElement.className = "text-4xl font-black font-mono text-slate-300";
+            timerElement.innerText = "00:00:00";
+
+            const timerBadge = document.getElementById('timerBadge');
+            timerBadge.innerText = "Cadeira Vazia";
+            timerBadge.className = "inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase";
+
+            // Reseta detalhes
+            document.getElementById('dentalPatientName').innerText = "- Nenhum -";
+            document.getElementById('dentalProcName').innerText = "-";
+            document.getElementById('dentalProcValue').innerText = "-";
+
+            // Modifica a linha na tabela do dentista
+            const row = document.getElementById(`dentist-row-${id}`);
+            const controlCell = row.cells[3];
+            controlCell.innerHTML = `
+                    <div class="text-center">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-full block w-full">
+                            <i class="fa-solid fa-circle-check"></i> Concluído
+                        </span>
+                    </div>
+                `;
+            row.classList.add('bg-slate-50/40', 'text-slate-400');
+
+            showToast("Atendimento Concluído", "Baixa do procedimento social gravada no sistema.");
+        }
+
+        // REGISTRAR NO-SHOW E SUSPENSÃO DE CPF
+        function triggerNoShow(id, name) {
+            const modal = document.getElementById('noShowModal');
+            const modalPatientName = document.getElementById('modalPatientName');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            modalPatientName.innerText = name;
+            modal.classList.remove('hidden');
+
+            confirmBtn.onclick = function () {
+                modal.classList.add('hidden');
+                executeNoShowBlock(id, name);
+            };
+        }
+
+        function closeNoShowModal() {
+            document.getElementById('noShowModal').classList.add('hidden');
+        }
+
+        function executeNoShowBlock(id, name) {
+            // Modifica a linha na tabela do dentista
+            const row = document.getElementById(`dentist-row-${id}`);
+            if (row) {
+                const controlCell = row.cells[3];
+                controlCell.innerHTML = `
+                        <div class="text-center">
+                            <span class="text-xs font-bold text-red-600 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-full block w-full">
+                                <i class="fa-solid fa-user-slash"></i> CPF Bloqueado
+                            </span>
+                        </div>
+                    `;
+                row.classList.add('bg-rose-50/10', 'text-rose-400/80');
+            }
+
+            // Bloqueia também na tabela da secretaria
+            const secretarRow = document.getElementById(`row-${id}`);
+            if (secretarRow) {
+                secretarRow.cells[4].innerHTML = `
+                        <div class="text-center">
+                            <span class="text-xs font-bold text-red-600 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-full block w-full">
+                                Suspenso (No-Show)
+                            </span>
+                        </div>
+                    `;
+                secretarRow.classList.add('bg-rose-50/10');
+            }
+
+            // Reseta timer se o paciente bloqueado era o que estava ativo na cadeira
+            if (activePatientId === id && timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                document.getElementById('chairTimer').innerText = "00:00:00";
+                document.getElementById('chairTimer').className = "text-4xl font-black font-mono text-slate-300";
+                document.getElementById('timerBadge').innerText = "Cadeira Vazia";
+                document.getElementById('timerBadge').className = "inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase";
+                document.getElementById('dentalPatientName').innerText = "- Nenhum -";
+                document.getElementById('dentalProcName').innerText = "-";
+                document.getElementById('dentalProcValue').innerText = "-";
+            }
+
+            showToast("No-Show Registrado", `${name} suspenso por 180 dias por infração da RN05.`);
+        }
+
+        // Lógica de Aprovação da Secretaria
         function approveStudent(studentId) {
             const row = document.getElementById(`row-${studentId}`);
             if (!row) return;
 
-            // Substitui botões de ação por tag de Sucesso
             const actionCell = row.cells[4];
             actionCell.innerHTML = `
                     <div class="text-center">
@@ -577,27 +1055,24 @@
                 `;
             row.classList.add('bg-slate-50/40', 'text-slate-400');
 
-            // Atualiza contadores e barra de progresso
             approvedCount++;
             document.getElementById('quotaText').innerText = "3 de 3 vagas";
             document.getElementById('progressBar').style.width = "100%";
             document.getElementById('investmentValue').innerText = "R$ 2.604,00";
 
-            // Altera badge de pendentes
             const remaining = totalPending - approvedCount;
             document.getElementById('pendingBadge').innerText = `${remaining} Pendentes`;
             if (remaining === 0) {
                 document.getElementById('pendingBadge').className = "bg-slate-100 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-full";
             }
 
-            // Exibe Alerta de Cota Esgotada e Altera Informativo de Vagas
             document.getElementById('quotaHelper').className = "text-xs text-red-600 font-semibold flex items-center gap-1";
             document.getElementById('quotaHelper').innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Cota esgotada! Próximas vagas apenas no mês seguinte.`;
 
             showQuotaAlert();
         }
 
-        // Lógica de Rejeição
+        // Lógica de Rejeição da Secretaria
         function rejectStudent(studentId) {
             const row = document.getElementById(`row-${studentId}`);
             if (!row) return;
@@ -617,7 +1092,7 @@
             document.getElementById('pendingBadge').innerText = `${remaining} Pendentes`;
         }
 
-        // Alertas Dinâmicos
+        // Toasts e Alertas Dinâmicos
         function showQuotaAlert() {
             const alertBox = document.getElementById('quotaAlert');
             alertBox.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
@@ -627,10 +1102,13 @@
                 alertBox.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
             }, 5500);
         }
-
+        s
         function showToast(title, text) {
             const toast = document.getElementById('successToast');
+            const toastTitle = document.getElementById('successToastTitle');
             const toastText = document.getElementById('successToastText');
+
+            toastTitle.innerText = title;
             toastText.innerText = text;
 
             toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
