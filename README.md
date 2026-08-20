@@ -3,23 +3,23 @@
 Parceria comunitária de impacto social e tecnológico desenvolvida para a clínica Click Dent em cooperação com as Atividades Curriculares de Extensão (ACE) e o Projeto Integrador I (PI-I) do UniCEUB.
 
 
-# 🚀 Links Rápidos do Projeto
+#  Links Rápidos do Projeto
 
-- 🌐 **Acesso ao Portal Online:** [SiGOS Pages](https://camilexaviermedina.github.io/sigos-repository/)
-- 🎨 **Protótipo Interativo UI/UX:** Figma SiGOS Design
-- 📅 **Quadro Scrumban de Atividades:** Trello de Gerenciamento
+-  **Acesso ao Portal Online:** [SiGOS Pages](https://camilexaviermedina.github.io/sigos-repository/)
+-  **Protótipo Interativo UI/UX:** Figma SiGOS Design
+- **Quadro Scrumban de Atividades:** Trello de Gerenciamento
 
 
-# 📝 Visão Geral
+# Visão Geral
 
 O **SiGOS** é uma plataforma Web responsiva projetada sob a arquitetura MVC com o objetivo de digitalizar e automatizar o controle de vagas filantrópicas odontológicas voltadas a estudantes universitários de baixa renda no Distrito Federal.
 
 O sistema atua como uma barreira lógica de proteção operacional e financeira para a clínica parceira Click Dent, extinguindo processos manuais de triagem e planilhas analógicas e substituindo-os por uma governança digital ética, segura e em total conformidade com as diretrizes da LGPD.
 
 
-# ⚙️ Regras de Negócio e Funcionalidades Críticas
+# Regras de Negócio e Funcionalidades Críticas
 
-## 🔒 Trava de Segurança de Cota Mensal (RF03)
+## Trava de Segurança de Cota Mensal (RF03)
 
 O sistema monitora as confirmações e bloqueia automaticamente novos agendamentos sociais assim que o limite rígido de **3 (três) vagas confirmadas por mês** é atingido.
 
@@ -29,7 +29,7 @@ Novas solicitações são automaticamente direcionadas para uma lista de espera 
 
 
 
-## 🚫 Suspensão e Controle de No-Show (RF04 / RN05)
+## Suspensão e Controle de No-Show (RF04 / RN05)
 
 Caso o estudante falte sem justificativa prévia de 24 horas, o cirurgião-dentista pode registrar um evento de **No-Show**.
 
@@ -41,7 +41,7 @@ O sistema:
 
 
 
-## 📊 Algoritmo de Priorização Social (RF06)
+## Algoritmo de Priorização Social (RF06)
 
 A fila de triagem é organizada automaticamente por um algoritmo de prioridade social:
 
@@ -54,7 +54,7 @@ Representação lógica:
 
 
 
-## ⏱️ Alerta de Monitoramento de Cadeira (RF05)
+## Alerta de Monitoramento de Cadeira (RF05)
 
 Ao iniciar o atendimento odontológico, um cronômetro clínico é disparado.
 
@@ -66,7 +66,7 @@ uma notificação visual é exibida na secretaria para evitar impactos na agenda
 
 
 
-## 🔐 Criptografia de Renda RSA-2048 (RN08 / RNF03)
+## Criptografia de Renda RSA-2048 (RN08 / RNF03)
 
 Para proteção dos dados socioeconômicos sensíveis e conformidade com a LGPD:
 
@@ -76,7 +76,7 @@ Para proteção dos dados socioeconômicos sensíveis e conformidade com a LGPD:
 
 
 
-# 📂 Estrutura de Arquivos e Organização do Repositório
+# Estrutura de Arquivos e Organização do Repositório
 
 ```text
 projeto-integrador-sigos/
@@ -102,7 +102,7 @@ projeto-integrador-sigos/
 
 
 
-# 🛠️ Stack Tecnológica
+# Stack Tecnológica
 
 ## Frontend
 
@@ -135,7 +135,7 @@ projeto-integrador-sigos/
 
 
 
-# 💻 Como Rodar o Projeto Localmente
+# Como Rodar o Projeto Localmente
 
 ## 1. Executando o Frontend
 
@@ -176,29 +176,29 @@ dotnet run
 
 
 
-# 👥 Responsáveis pelo Projeto
+# Responsáveis pelo Projeto
 
-## 👩‍💻 Desenvolvedora e Product Owner
+## Desenvolvedora e Product Owner
 
 **Camile Xavier Medina**  
 Estudante de Análise e Desenvolvimento de Sistemas – UniCEUB
 
 
 
-## 🏥 Patrocinador e Stakeholder
+## Patrocinador e Stakeholder
 
 **Daniel da Cunha Pereira Luz**  
 Click Dent / Inova Simples
 
 
 
-## 🎓 Professor Orientador
+## Professor Orientador
 
 **Prof. Valdemir S. Silva**  
 Centro Universitário de Brasília – UniCEUB
 
 
 
-# 📄 Licença
+# Licença
 
 Projeto desenvolvido exclusivamente para fins acadêmicos, extensionistas e de impacto social no âmbito do Projeto Integrador I (PI-I) e das Atividades Curriculares de Extensão (ACE) do UniCEUB.
